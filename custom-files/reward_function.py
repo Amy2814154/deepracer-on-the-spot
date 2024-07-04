@@ -1,6 +1,6 @@
 def reward_function(params):
     '''
-    Reward function to encourage speed and mitigate zig-zag behaviors
+    Reward function to encourage speed and mitigate going off track during turns
     '''
     
     # Read input parameters
@@ -8,6 +8,8 @@ def reward_function(params):
     track_width = params['track_width']
     steering = abs(params['steering_angle'])
     speed = params['speed']
+    all_wheels_on_track = params['all_wheels_on_track']
+    progress = params['progress']
 
     # Calculate markers that are farther away from the center line
     marker_1 = 0.1 * track_width
@@ -24,6 +26,10 @@ def reward_function(params):
     else:
         reward = 1e-3  # likely crashed/close to off track
 
+    # Penalize if not all wheels are on track
+    if not all_wheels_on_track:
+        reward *= 0.1
+
     # Steering penalty threshold
     ABS_STEERING_THRESHOLD = 15
 
@@ -31,9 +37,13 @@ def reward_function(params):
     if steering > ABS_STEERING_THRESHOLD:
         reward *= 0.7
 
-    # Significantly reward higher speeds
-    SPEED_THRESHOLD = 3.0
+    # Reward higher speeds more significantly
+    SPEED_THRESHOLD = 2.5
     if speed > SPEED_THRESHOLD:
-        reward *= 2.0
+        reward *= 1.5
+
+    # Additional reward for completing the lap faster
+    if progress == 100:
+        reward += 10.0  # Large reward for completing the lap
 
     return float(reward)
